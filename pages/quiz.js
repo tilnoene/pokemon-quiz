@@ -7,13 +7,14 @@ import QuizLogo from '../src/components/QuizLogo';
 import QuizBackground from '../src/components/QuizBackground';
 import QuizContainer from '../src/components/QuizContainer';
 import GitHubCorner from '../src/components/GitHubCorner';
-import Input from '../src/components/Input';
 import Button from '../src/components/Button';
 import PokemonImage from '../src/components/PokemonImage';
 
 function getRandomIntInclusive(min, max) {
+  /* eslint-disable no-param-reassign */
   min = Math.ceil(min);
   max = Math.floor(max);
+
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -25,7 +26,7 @@ function LoadingWidget() {
       </Widget.Header>
 
       <Widget.Content>
-        [Desafio do Loading]
+        Carregando questões...
       </Widget.Content>
     </Widget>
   );
@@ -48,7 +49,7 @@ function QuestionWidget({
       </Widget.Header>
       <Widget.Content>
         <PokemonImage src={question.image} />
-        <form onSubimt={(e) => {
+        <form onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
         }}>
@@ -85,15 +86,12 @@ const screenStates = {
 
 export default function QuizPage(props) {
   const [screenState, setScreenState] = useState(screenStates.QUIZ);
-  const totalQuestions = 5;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questionIndex = currentQuestion;
+  const totalQuestions = props.questions.length;
 
   useEffect(() => {
     /* fetch() aqui */
-    setTimeout(() => {
-
-    }, 1 * 1000);
   }, [questionIndex]);
 
   function handleSubmit() {
@@ -101,7 +99,7 @@ export default function QuizPage(props) {
     if (nextQuestion < totalQuestions) {
       setCurrentQuestion(nextQuestion);
     } else {
-      setScreenState(screenStates.FINISH);
+      setScreenState(screenStates.RESULT);
     }
   }
 
@@ -117,14 +115,18 @@ export default function QuizPage(props) {
 
         {screenState === 'QUIZ' && (
           <QuestionWidget
-            question={props.question}
+            question={props.questions[currentQuestion]}
             questionIndex={questionIndex}
             totalQuestions={totalQuestions}
             onSubmit={handleSubmit}
           />
         )}
 
-        {screenState === 'RESULT' && <div>Você acertou N questões</div>}
+        {screenState === 'RESULT' && //status diferente pra cada número de acertos
+          <Widget>
+            Você acertou X questões!
+          </Widget>
+        }
       </QuizContainer>
       <GitHubCorner projectUrl="https://github.com/tilnoene/pokemonquiz" />
     </QuizBackground>
@@ -133,34 +135,40 @@ export default function QuizPage(props) {
 
 export async function getStaticProps() {
   // try {
-  const question = {};
-  const PokemonId = [];
+  const questions = []; // todas as questões
 
-  question.title = 'Quem é esse pokémon?';
-  question.answer = getRandomIntInclusive(0, 3);
-  question.alternatives = [];
+  for (let i = 0; i < 3; i += 1) {
+    const question = {};
+    const pokemonId = [];
 
-  for (let i = 0; i < 5; i += 1) {
-    let newPokemonId = getRandomIntInclusive(1, 386);
+    question.title = 'Quem é esse pokémon?';
+    question.answer = getRandomIntInclusive(0, 3);
+    question.alternatives = [];
 
-    // não repetir o nome do pokémon
-    while (PokemonId.indexOf(newPokemonId) !== -1) {
-      newPokemonId = getRandomIntInclusive(1, 386);
+    for (let j = 0; j < 4; j += 1) {
+      let newPokemonId = getRandomIntInclusive(1, 386);
+
+      // não repetir o nome do pokémon
+      while (pokemonId.indexOf(newPokemonId) !== -1) {
+        newPokemonId = getRandomIntInclusive(1, 386);
+      }
+      pokemonId.push(newPokemonId);
+
+      const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonId}`)
+        .then((response) => response.json());
+
+      if (j === question.answer) {
+        question.image = pokemon.sprites.other.dream_world.front_default;
+      }
+      question.alternatives.push(pokemon.name);
     }
-    PokemonId.push(newPokemonId);
 
-    const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonId}`)
-      .then((response) => response.json());
-
-    if (i === question.answer) {
-      question.image = pokemon.sprites.other.dream_world.front_default;
-    }
-    question.alternatives.push(pokemon.name);
+    questions.push(question);
   }
 
   return {
     props: {
-      question,
+      questions: questions, // db.questions, se for usar o arquivo bd.json
     },
   };
   /* } catch (err) {
