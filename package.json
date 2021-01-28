@@ -5,7 +5,8 @@
     "dev": "next",
     "build": "next build",
     "start": "next start",
-    "eslint:init": "eslint --init"
+    "eslint:init": "eslint --init",
+    "lint": "eslint ./ --fix"
   },
   "dependencies": {
     "next": "latest",

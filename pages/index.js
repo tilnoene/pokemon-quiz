@@ -1,5 +1,7 @@
-import styled from 'styled-components'
+import React from 'react';
+import styled from 'styled-components';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 import db from '../db.json';
 import Widget from '../src/components/Widget';
@@ -21,12 +23,15 @@ export const QuizContainer = styled.div`
 `;
 
 export default function Home() {
+  const router = useRouter();
+  const [name, setName] = React.useState('');
+
   return (
     <QuizBackground backgroundImage={db.bg}>
       <Head>
         <title>Pokémon Quiz</title>
       </Head>
-      
+
       <QuizContainer>
         <QuizLogo />
         <Widget>
@@ -34,10 +39,19 @@ export default function Home() {
             <h1>Qual o seu nível de treinador pokémon?</h1>
           </Widget.Header>
           <Widget.Content>
-            <p>lorem ipsum dolor sit amet...</p>
+            <form onSubmit={function (e) {
+              e.preventDefault();
+
+              router.push(`/quiz?name=${name}`);
+            }}>
+              <input placeholder="Digite seu nome" onChange={(e) => setName(e.target.value)}/>
+              <button type="submit" disabled={name.length === 0}>
+                Jogar [seuNome]
+              </button>
+            </form>
           </Widget.Content>
         </Widget>
-          
+
         <Widget>
           <Widget.Content>
             <h1>Quizes da Galera</h1>
