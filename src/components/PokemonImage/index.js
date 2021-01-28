@@ -4,8 +4,7 @@ const PokemonImage = styled.img`
   width: 50%;
   height: 50%;
   filter: contrast(0%);
-  margin: 0 auto;
-  
+
   pointer-events: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;

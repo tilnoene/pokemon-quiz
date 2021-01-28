@@ -10,12 +10,33 @@ import GitHubCorner from '../src/components/GitHubCorner';
 import Button from '../src/components/Button';
 import PokemonImage from '../src/components/PokemonImage';
 
-function getRandomIntInclusive(min, max) {
-  /* eslint-disable no-param-reassign */
-  min = Math.ceil(min);
-  max = Math.floor(max);
+function ResultWidget({ results }) {
+  const acertos = results.filter((x) => x).length;
 
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return (
+    <Widget>
+      <Widget.Header>
+        Resultado
+      </Widget.Header>
+
+      <Widget.Content>
+        <p>{`Você acertou ${acertos} perguntas.`}</p>
+        {acertos === 0 && <p>Tem certeza que você já assistiu ou jogou pokémon?</p>}
+        {acertos === 1 && <p>Você pode ser considerado um trienador novato.</p>}
+        {acertos === 2 && <p>Você é definitivamente um treinador pokémon!</p>}
+        {acertos === 3 && <p>Você é a personificação da Pokédex, parabéns!</p>}
+
+        <ul>
+          {results.map((result, index) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <li key={index}>
+              {`#${index + 1} Resultado: ${result ? 'Acertou' : 'Errou'}`}
+            </li>
+          ))}
+        </ul>
+      </Widget.Content>
+    </Widget>
+  );
 }
 
 function LoadingWidget() {
@@ -39,7 +60,11 @@ function QuestionWidget({
   totalQuestions,
   onSubmit,
 }) {
+  const [selectedAlternative, setSelectedAlternative] = useState(undefined);
+  const [isQuestionSubmited, setIsQuestionSubmited] = useState(false);
   const questionId = `question__${questionIndex}`;
+  const isCorrect = selectedAlternative === question.answer;
+  const hasAlternativeSelected = selectedAlternative !== undefined;
 
   return (
     <Widget>
@@ -51,8 +76,14 @@ function QuestionWidget({
         <PokemonImage src={question.image} />
         <form onSubmit={(e) => {
           e.preventDefault();
-          onSubmit();
-        }}>
+          setIsQuestionSubmited(true);
+          setTimeout(() => {
+            onSubmit();
+            setIsQuestionSubmited(false);
+            setSelectedAlternative(undefined);
+          }, 2 * 1000);
+        }}
+        >
           {/* eslint-disable-next-line react/prop-types */}
           {question.alternatives.map((alternative, alternativeIndex) => {
             const alternativeId = `alternative__${alternativeIndex}`;
@@ -60,18 +91,24 @@ function QuestionWidget({
             return (
               <Widget.Topic
                 as="label"
+                key={alternativeId}
                 htmlFor={alternativeId}
               >
                 <input
                   id={alternativeId}
                   name={questionId}
+                  onChange={() => setSelectedAlternative(alternativeIndex)}
                   type="radio"
                 />
                 {alternative}
               </Widget.Topic>
             );
           }) /* saber se tem selecionada e disabled no botão */}
-          <Button>CONFIRMAR</Button>
+          <Button type="submit" disabled={!hasAlternativeSelected}>
+            CONFIRMAR
+          </Button>
+          {isQuestionSubmited && isCorrect && <p>Você acertou!</p>}
+          {isQuestionSubmited && !isCorrect && <p>Você errou!</p>}
         </form>
       </Widget.Content>
     </Widget>
@@ -85,10 +122,11 @@ const screenStates = {
 };
 
 export default function QuizPage(props) {
-  const [screenState, setScreenState] = useState(screenStates.QUIZ);
+  const [screenState, setScreenState] = useState(screenStates.RESULT);
+  const [results, setResults] = useState([false, false, false]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questionIndex = currentQuestion;
-  const totalQuestions = props.questions.length;
+  const totalQuestions = 3; // props.questions.length;
 
   useEffect(() => {
     /* fetch() aqui */
@@ -122,17 +160,23 @@ export default function QuizPage(props) {
           />
         )}
 
-        {screenState === 'RESULT' && //status diferente pra cada número de acertos
-          <Widget>
-            Você acertou X questões!
-          </Widget>
-        }
+        {screenState === 'RESULT' // status diferente pra cada número de acertos
+          && <ResultWidget results={results} />}
       </QuizContainer>
       <GitHubCorner projectUrl="https://github.com/tilnoene/pokemonquiz" />
     </QuizBackground>
   );
 }
 
+function getRandomIntInclusive(min, max) {
+  /* eslint-disable no-param-reassign */
+  min = Math.ceil(min);
+  max = Math.floor(max);
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/*
 export async function getStaticProps() {
   // try {
   const questions = []; // todas as questões
@@ -173,5 +217,6 @@ export async function getStaticProps() {
   };
   /* } catch (err) {
     throw new Error('Deu ruim:(');
-  } */
+  }
 }
+*/
