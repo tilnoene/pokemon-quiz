@@ -14,6 +14,7 @@ const GlobalStyle = createGlobalStyle`
     display: flex;
     flex-direction: column;
     font-family: 'Lato', sans-serif;
+    font-size: 18px;
     color: ${({ theme }) => theme.colors.contrastText};
   }
 

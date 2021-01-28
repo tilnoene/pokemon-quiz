@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 
@@ -7,6 +8,7 @@ import QuizLogo from '../src/components/QuizLogo';
 import QuizBackground from '../src/components/QuizBackground';
 import QuizContainer from '../src/components/QuizContainer';
 import GitHubCorner from '../src/components/GitHubCorner';
+import AlternativesForm from '../src/components/AlternativesForm';
 import Button from '../src/components/Button';
 import PokemonImage from '../src/components/PokemonImage';
 
@@ -16,20 +18,21 @@ function ResultWidget({ results }) {
   return (
     <Widget>
       <Widget.Header>
-        Resultado
+        <h1>Resultado</h1>
       </Widget.Header>
 
       <Widget.Content>
-        <p>{`Você acertou ${acertos} perguntas.`}</p>
+        <p>{`Você acertou ${acertos} pergunta${acertos === 1 ? '' : 's'}.`}</p>
         {acertos === 0 && <p>Tem certeza que você já assistiu ou jogou pokémon?</p>}
-        {acertos === 1 && <p>Você pode ser considerado um trienador novato.</p>}
+        {acertos === 1 && <p>Você pode se considerar um trienador novato.</p>}
         {acertos === 2 && <p>Você é definitivamente um treinador pokémon!</p>}
         {acertos === 3 && <p>Você é a personificação da Pokédex, parabéns!</p>}
 
         <ul>
+          {/* eslint-disable-next-line react/prop-types */}
           {results.map((result, index) => (
             // eslint-disable-next-line react/no-array-index-key
-            <li key={index}>
+            <li key={`result__${index}`}>
               {`#${index + 1} Resultado: ${result ? 'Acertou' : 'Errou'}`}
             </li>
           ))}
@@ -59,6 +62,7 @@ function QuestionWidget({
   questionIndex,
   totalQuestions,
   onSubmit,
+  addResult,
 }) {
   const [selectedAlternative, setSelectedAlternative] = useState(undefined);
   const [isQuestionSubmited, setIsQuestionSubmited] = useState(false);
@@ -73,26 +77,31 @@ function QuestionWidget({
         <h1>{question.title}</h1>
       </Widget.Header>
       <Widget.Content>
-        <PokemonImage src={question.image} />
-        <form onSubmit={(e) => {
+        <AlternativesForm onSubmit={(e) => {
           e.preventDefault();
           setIsQuestionSubmited(true);
           setTimeout(() => {
+            addResult(isCorrect);
             onSubmit();
             setIsQuestionSubmited(false);
             setSelectedAlternative(undefined);
           }, 2 * 1000);
         }}
         >
+          <PokemonImage src={question.image} visible={isQuestionSubmited} />
           {/* eslint-disable-next-line react/prop-types */}
           {question.alternatives.map((alternative, alternativeIndex) => {
             const alternativeId = `alternative__${alternativeIndex}`;
+            const alternativeStatus = isCorrect ? 'SUCCESS' : 'ERROR';
+            const isSelected = selectedAlternative === alternativeIndex;
 
             return (
               <Widget.Topic
                 as="label"
                 key={alternativeId}
                 htmlFor={alternativeId}
+                data-selected={isSelected}
+                data-status={isQuestionSubmited && alternativeStatus}
               >
                 <input
                   id={alternativeId}
@@ -107,9 +116,7 @@ function QuestionWidget({
           <Button type="submit" disabled={!hasAlternativeSelected}>
             CONFIRMAR
           </Button>
-          {isQuestionSubmited && isCorrect && <p>Você acertou!</p>}
-          {isQuestionSubmited && !isCorrect && <p>Você errou!</p>}
-        </form>
+        </AlternativesForm>
       </Widget.Content>
     </Widget>
   );
@@ -122,16 +129,23 @@ const screenStates = {
 };
 
 export default function QuizPage(props) {
-  const [screenState, setScreenState] = useState(screenStates.RESULT);
-  const [results, setResults] = useState([false, false, false]);
+  const [screenState, setScreenState] = useState(screenStates.QUIZ);
+  const [results, setResults] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questionIndex = currentQuestion;
   const totalQuestions = 3; // props.questions.length;
 
+  function addResult(result) {
+    setResults([
+      ...results,
+      result,
+    ]);
+  }
+  /*
   useEffect(() => {
-    /* fetch() aqui */
+    fetch() aqui 
   }, [questionIndex]);
-
+  */
   function handleSubmit() {
     const nextQuestion = questionIndex + 1;
     if (nextQuestion < totalQuestions) {
@@ -153,10 +167,12 @@ export default function QuizPage(props) {
 
         {screenState === 'QUIZ' && (
           <QuestionWidget
+            // eslint-disable-next-line react/destructuring-assignment
             question={props.questions[currentQuestion]}
             questionIndex={questionIndex}
             totalQuestions={totalQuestions}
             onSubmit={handleSubmit}
+            addResult={addResult}
           />
         )}
 
@@ -176,7 +192,6 @@ function getRandomIntInclusive(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/*
 export async function getStaticProps() {
   // try {
   const questions = []; // todas as questões
@@ -198,6 +213,7 @@ export async function getStaticProps() {
       }
       pokemonId.push(newPokemonId);
 
+      // eslint-disable-next-line no-await-in-loop
       const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonId}`)
         .then((response) => response.json());
 
@@ -212,11 +228,10 @@ export async function getStaticProps() {
 
   return {
     props: {
-      questions: questions, // db.questions, se for usar o arquivo bd.json
+      questions, // db.questions, se for usar o arquivo bd.json
     },
   };
   /* } catch (err) {
     throw new Error('Deu ruim:(');
-  }
+  }*/
 }
-*/
