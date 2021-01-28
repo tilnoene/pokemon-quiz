@@ -10,6 +10,16 @@ const Button = styled.button`
   border-radius: 10px;
   cursor: pointer;
   font-weight: 800;
+  outline: none;
+
+  &:hover,
+  &:focus {
+    opacity: .7;
+  }
+  &:disabled {
+    background-color: #979797;
+    cursor: not-allowed;
+  }
 `;
 
 export default Button;
