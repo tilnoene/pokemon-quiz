@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -52,7 +53,13 @@ export default function Home() {
           <Widget.Content>
             <h1>Quizes da Galera</h1>
 
-            <p>Esses são os melhores</p>
+            <p>Melhores dos melhores:</p>
+            {db.external.map((quiz, index) => (
+              // eslint-disable-next-line jsx-a11y/anchor-is-valid
+              <a href={quiz} target="_blank" rel="noreferrer" key={index}>
+                {quiz}
+              </a>
+            ))}
           </Widget.Content>
         </Widget>
         <Footer />

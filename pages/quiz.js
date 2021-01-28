@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 import db from '../db.json';
 import Widget from '../src/components/Widget';
@@ -14,6 +15,8 @@ import PokemonImage from '../src/components/PokemonImage';
 
 function ResultWidget({ results }) {
   const acertos = results.filter((x) => x).length;
+  const router = useRouter();
+  const name = router.asPath.split('=')[1];
 
   return (
     <Widget>
@@ -23,10 +26,10 @@ function ResultWidget({ results }) {
 
       <Widget.Content>
         <p>{`Você acertou ${acertos} pergunta${acertos === 1 ? '' : 's'}.`}</p>
-        {acertos === 0 && <p>Tem certeza que você já assistiu ou jogou pokémon?</p>}
-        {acertos === 1 && <p>Você pode se considerar um trienador novato.</p>}
-        {acertos === 2 && <p>Você é definitivamente um treinador pokémon!</p>}
-        {acertos === 3 && <p>Você é a personificação da Pokédex, parabéns!</p>}
+        {acertos === 0 && <p>{`${name}, tem certeza que você já assistiu ou jogou pokémon?`}</p>}
+        {acertos === 1 && <p>{`${name}, você pode se considerar um trienador novato.`}</p>}
+        {acertos === 2 && <p>{`${name}, você é definitivamente um treinador pokémon!`}</p>}
+        {acertos === 3 && <p>{`Você é a personificação da Pokédex, parabéns ${name}!`}</p>}
 
         <ul>
           {/* eslint-disable-next-line react/prop-types */}
@@ -122,14 +125,63 @@ function QuestionWidget({
   );
 }
 
+function getRandomIntInclusive(min, max) {
+  /* eslint-disable no-param-reassign */
+  min = Math.ceil(min);
+  max = Math.floor(max);
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const generateQuestions = async () => {
+  try {
+    const questions = []; // todas as questões
+
+    for (let i = 0; i < 3; i += 1) {
+      const question = {};
+      const pokemonId = [];
+
+      question.title = 'Quem é esse pokémon?';
+      question.answer = getRandomIntInclusive(0, 3);
+      question.alternatives = [];
+
+      for (let j = 0; j < 4; j += 1) {
+        let newPokemonId = getRandomIntInclusive(1, 386);
+
+        // não repetir o nome do pokémon
+        while (pokemonId.indexOf(newPokemonId) !== -1) {
+          newPokemonId = getRandomIntInclusive(1, 386);
+        }
+        pokemonId.push(newPokemonId);
+
+        // eslint-disable-next-line no-await-in-loop
+        const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonId}`)
+          .then((response) => response.json());
+
+        if (j === question.answer) {
+          question.image = pokemon.sprites.other.dream_world.front_default;
+        }
+        question.alternatives.push(pokemon.name);
+      }
+
+      questions.push(question);
+    }
+
+    return questions;
+  } catch (err) {
+    throw new Error('Deu ruim:(');
+  }
+};
+
 const screenStates = {
   QUIZ: 'QUIZ',
   LOADING: 'LOADING',
   RESULT: 'RESULT',
 };
 
-export default function QuizPage(props) {
-  const [screenState, setScreenState] = useState(screenStates.QUIZ);
+export default function QuizPage() {
+  const [screenState, setScreenState] = useState(screenStates.LOADING);
+  const [questions, setQuestions] = useState([]);
   const [results, setResults] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questionIndex = currentQuestion;
@@ -141,11 +193,14 @@ export default function QuizPage(props) {
       result,
     ]);
   }
-  /*
+
   useEffect(() => {
-    fetch() aqui 
-  }, [questionIndex]);
-  */
+    generateQuestions().then((response) => {
+      setQuestions(response);
+      setScreenState(screenStates.QUIZ);
+    });
+  }, []);
+
   function handleSubmit() {
     const nextQuestion = questionIndex + 1;
     if (nextQuestion < totalQuestions) {
@@ -168,7 +223,7 @@ export default function QuizPage(props) {
         {screenState === 'QUIZ' && (
           <QuestionWidget
             // eslint-disable-next-line react/destructuring-assignment
-            question={props.questions[currentQuestion]}
+            question={questions[currentQuestion]}
             questionIndex={questionIndex}
             totalQuestions={totalQuestions}
             onSubmit={handleSubmit}
@@ -182,56 +237,4 @@ export default function QuizPage(props) {
       <GitHubCorner projectUrl="https://github.com/tilnoene/pokemonquiz" />
     </QuizBackground>
   );
-}
-
-function getRandomIntInclusive(min, max) {
-  /* eslint-disable no-param-reassign */
-  min = Math.ceil(min);
-  max = Math.floor(max);
-
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export async function getStaticProps() {
-  // try {
-  const questions = []; // todas as questões
-
-  for (let i = 0; i < 3; i += 1) {
-    const question = {};
-    const pokemonId = [];
-
-    question.title = 'Quem é esse pokémon?';
-    question.answer = getRandomIntInclusive(0, 3);
-    question.alternatives = [];
-
-    for (let j = 0; j < 4; j += 1) {
-      let newPokemonId = getRandomIntInclusive(1, 386);
-
-      // não repetir o nome do pokémon
-      while (pokemonId.indexOf(newPokemonId) !== -1) {
-        newPokemonId = getRandomIntInclusive(1, 386);
-      }
-      pokemonId.push(newPokemonId);
-
-      // eslint-disable-next-line no-await-in-loop
-      const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${newPokemonId}`)
-        .then((response) => response.json());
-
-      if (j === question.answer) {
-        question.image = pokemon.sprites.other.dream_world.front_default;
-      }
-      question.alternatives.push(pokemon.name);
-    }
-
-    questions.push(question);
-  }
-
-  return {
-    props: {
-      questions, // db.questions, se for usar o arquivo bd.json
-    },
-  };
-  /* } catch (err) {
-    throw new Error('Deu ruim:(');
-  }*/
 }

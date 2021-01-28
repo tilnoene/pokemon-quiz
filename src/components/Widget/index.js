@@ -33,6 +33,9 @@ Widget.Header = styled.header`
 
 Widget.Content = styled.div`
   padding: 24px 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 
   & > *:first-child {
     margin-top: 0;
@@ -49,6 +52,12 @@ Widget.Content = styled.div`
     flex-direction: column;
     gap: 24px;
   }
+  a {
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+  }
 `;
 
 Widget.Topic = styled.a`
@@ -57,11 +66,16 @@ Widget.Topic = styled.a`
   color: ${({ theme }) => theme.colors.contrastText};
   background-color: ${({ theme }) => `${theme.colors.primary}40`};
   padding: 10px 15px;
-  margin-bottom: 8px;
   cursor: pointer;
   border-radius: ${({ theme }) => theme.borderRadius};
   transition: .3s;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  input {
+    display: none;
+  }
   
   &:hover,
   &:focus {

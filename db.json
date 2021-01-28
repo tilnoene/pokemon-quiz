@@ -27,7 +27,9 @@
       }
     ],
     "external": [
-      ""
+      "https://bladequiz.vercel.app/",
+      "https://pokemon-quiz.neorogerio.vercel.app/",
+      "https://aluraquiz-arcade.wesdrasalves.vercel.app/"
     ],
     "theme": {
       "colors": {
