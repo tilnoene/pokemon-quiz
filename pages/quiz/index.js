@@ -75,7 +75,7 @@ function QuestionWidget({
   const [isQuestionSubmited, setIsQuestionSubmited] = useState(false);
   const questionId = `question__${questionIndex}`;
   const isCorrect = selectedAlternative === question.answer;
-  const hasAlternativeSelected = selectedAlternative !== undefined;
+  const [hasAlternativeSelected, setHasAlternativeSelected] = useState(false);
 
   return (
     <Widget>
@@ -87,11 +87,13 @@ function QuestionWidget({
         <AlternativesForm onSubmit={(e) => {
           e.preventDefault();
           setIsQuestionSubmited(true);
+          setHasAlternativeSelected(false);
+
           setTimeout(() => {
             addResult(isCorrect);
-            onSubmit();
             setIsQuestionSubmited(false);
             setSelectedAlternative(undefined);
+            onSubmit();
           }, 2 * 1000);
         }}
         >
@@ -113,7 +115,10 @@ function QuestionWidget({
                 <input
                   id={alternativeId}
                   name={questionId}
-                  onChange={() => setSelectedAlternative(alternativeIndex)}
+                  onChange={() => {
+                    setSelectedAlternative(alternativeIndex);
+                    setHasAlternativeSelected(true);
+                  }}
                   type="radio"
                 />
                 {alternative}
