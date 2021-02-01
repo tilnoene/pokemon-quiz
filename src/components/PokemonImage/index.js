@@ -8,6 +8,8 @@ const PokemonImage = styled.img`
   &:focus {
     opacity: 1;
   }
+  align-self: center;
+
   pointer-events: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;

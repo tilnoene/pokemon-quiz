@@ -53,13 +53,24 @@ export default function Home() {
           <Widget.Content>
             <h1>Quizes da Galera</h1>
 
-            <p>Melhores dos melhores:</p>
-            {db.external.map((quiz, index) => (
-              // eslint-disable-next-line jsx-a11y/anchor-is-valid
-              <a href={quiz} target="_blank" rel="noreferrer" key={index}>
-                {quiz}
-              </a>
-            ))}
+            <ul>
+              {db.external.map((quiz) => {
+                const [projectName, githubUser] = quiz
+                  .replace(/\//g, '')
+                  .replace('https:', '')
+                  .replace('.vercel.app', '')
+                  .split('.');
+
+                return (
+                  <li key={quiz}>
+                    {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                    <Widget.Topic href={`/quiz/${projectName}___${githubUser}?name=Visitante`}>
+                      {`${githubUser}/${projectName}`}
+                    </Widget.Topic>
+                  </li>
+                );
+              })}
+            </ul>
           </Widget.Content>
         </Widget>
         <Footer />

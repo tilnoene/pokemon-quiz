@@ -1,17 +1,19 @@
+/* eslint-disable import/no-unresolved */
+/* eslint-disable import/extensions */
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
-import db from '../db.json';
-import Widget from '../src/components/Widget';
-import QuizLogo from '../src/components/QuizLogo';
-import QuizBackground from '../src/components/QuizBackground';
-import QuizContainer from '../src/components/QuizContainer';
-import GitHubCorner from '../src/components/GitHubCorner';
-import AlternativesForm from '../src/components/AlternativesForm';
-import Button from '../src/components/Button';
-import PokemonImage from '../src/components/PokemonImage';
+import db from '../../db.json';
+import Widget from '../../src/components/Widget';
+import QuizLogo from '../../src/components/QuizLogo';
+import QuizBackground from '../../src/components/QuizBackground';
+import QuizContainer from '../../src/components/QuizContainer';
+import GitHubCorner from '../../src/components/GitHubCorner';
+import AlternativesForm from '../../src/components/AlternativesForm';
+import Button from '../../src/components/Button';
+import PokemonImage from '../../src/components/PokemonImage';
 
 function ResultWidget({ results }) {
   const acertos = results.filter((x) => x).length;
@@ -40,6 +42,8 @@ function ResultWidget({ results }) {
             </li>
           ))}
         </ul>
+
+        <Button onClick={() => router.back()}>JOGAR NOVAMENTE</Button>
       </Widget.Content>
     </Widget>
   );
@@ -179,13 +183,25 @@ const screenStates = {
   RESULT: 'RESULT',
 };
 
-export default function QuizPage() {
+export default function QuizPage({ dataBase = db }) {
   const [screenState, setScreenState] = useState(screenStates.LOADING);
-  const [questions, setQuestions] = useState([]);
+  const [totalQuestions, setTotalQuestions] = useState(dataBase.questions.length);
   const [results, setResults] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const questionIndex = currentQuestion;
-  const totalQuestions = 3; // props.questions.length;
+
+  useEffect(() => {
+    // se o banco de dados não tiver questões, gerá-las aleatoriamente
+    if (dataBase.questions.length === 0) {
+      generateQuestions().then((response) => {
+        dataBase.questions = response;
+        setTotalQuestions(response.length);
+        setScreenState(screenStates.QUIZ);
+      });
+    } else {
+      setScreenState(screenStates.QUIZ);
+    }
+  }, []);
 
   function addResult(result) {
     setResults([
@@ -193,13 +209,6 @@ export default function QuizPage() {
       result,
     ]);
   }
-
-  useEffect(() => {
-    generateQuestions().then((response) => {
-      setQuestions(response);
-      setScreenState(screenStates.QUIZ);
-    });
-  }, []);
 
   function handleSubmit() {
     const nextQuestion = questionIndex + 1;
@@ -211,7 +220,7 @@ export default function QuizPage() {
   }
 
   return (
-    <QuizBackground backgroundImage={db.bg}>
+    <QuizBackground backgroundImage={dataBase.bg}>
       <Head>
         <title>Quem é esse pokémon?</title>
       </Head>
@@ -223,7 +232,7 @@ export default function QuizPage() {
         {screenState === 'QUIZ' && (
           <QuestionWidget
             // eslint-disable-next-line react/destructuring-assignment
-            question={questions[currentQuestion]}
+            question={dataBase.questions[currentQuestion]}
             questionIndex={questionIndex}
             totalQuestions={totalQuestions}
             onSubmit={handleSubmit}
